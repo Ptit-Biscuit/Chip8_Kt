@@ -27,37 +27,28 @@ class Keyboard {
     )
 
     /**
-     * Set of all key pressed
+     * Last key pressed
      */
-    private val keyPressed = mutableSetOf<Int>()
-
-    /** Some Chip-8 instructions require waiting for the next keypress.
-    We initialize this function elsewhere when needed. **/
-    var onNextKeyPress: ((Int) -> Unit)? = null
+    internal var keyPressed = -1
 
     /**
      * Checks if a CHIP-8 key is pressed
      */
     fun isKeyPressed(key: Int): Boolean {
-        return keyPressed.contains(key)
+        return keyPressed == key
     }
 
     /**
      * Listener for CHIP-8 key down events
      */
     fun onKeyDown(event: KeyEvent) {
-        keymap[event.key]?.let { mappedKey ->
-            keyPressed.add(mappedKey)
-
-            onNextKeyPress?.invoke(mappedKey)
-            onNextKeyPress = null
-        }
+        keymap[event.key]?.let { mappedKey -> keyPressed = mappedKey }
     }
 
     /**
      * Listener for CHIP-8 key up events
      */
     fun onKeyUp(event: KeyEvent) {
-        keymap[event.key]?.let { mappedKey -> keyPressed.remove(mappedKey) }
+        keyPressed = -1
     }
 }

@@ -12,10 +12,14 @@ class Renderer(scale: Int) {
     internal var display = MutableList(cols * rows) { 0 }
 
     fun setPixel(x: Int, y: Int): Boolean {
-        val pixelLoc = x % this.cols + ((y % this.rows) * this.cols)
+        val pixelLoc = (x % cols) + ((y % rows) * cols)
         display[pixelLoc] = display[pixelLoc] xor 1
 
         return display[pixelLoc] == 0
+    }
+
+    fun getPixel(x: Int, y: Int): Int {
+        return display[(x % cols) + ((y % rows) * cols)]
     }
 
     fun clear() {

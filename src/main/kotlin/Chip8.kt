@@ -52,7 +52,7 @@ class Chip8 {
 
     fun run() {
         if (configuration.headless) {
-            cpu.cycle(memory, renderer)
+            cpu.cycle(memory, renderer, keyboard)
         } else {
             application {
                 configure {
@@ -68,7 +68,7 @@ class Chip8 {
                     drawer.fill = ColorRGBa.WHITE
 
                     extend {
-                        cpu.cycle(memory, renderer)
+                        cpu.cycle(memory, renderer, this@Chip8.keyboard)
                         renderer.render(drawer)
                     }
                 }
