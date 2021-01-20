@@ -4,5 +4,5 @@ fun main() = chip8 {
         scale = 16
     }
 
-    run("BLINKY")
+    run("wipeoff")
 }
