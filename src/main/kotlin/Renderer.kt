@@ -1,3 +1,4 @@
+import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
 import kotlin.math.floor
 
@@ -31,9 +32,8 @@ class Renderer(scale: Int) {
             val x = (it.toDouble() % cols) * scale
             val y = floor(it.toDouble() / cols) * scale
 
-            if (display[it] == 1) {
-                drawer.rectangle(x, y, scale.toDouble(), scale.toDouble())
-            }
+            drawer.fill = if (display[it] == 1) ColorRGBa.WHITE else ColorRGBa.BLACK
+            drawer.rectangle(x, y, scale.toDouble(), scale.toDouble())
         }
     }
 

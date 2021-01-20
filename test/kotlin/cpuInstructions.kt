@@ -1,5 +1,3 @@
-import CPU.Companion.toUByte
-import CPU.Companion.toUShort
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,460 +8,395 @@ import kotlin.test.assertTrue
 class CPUInstructions {
     @Test
     fun `00E0 - CLS - Clear the display`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
+        Chip8(Configuration().apply { headless = true }).apply {
             renderer.testRender()
-            cpu.executeOpcode(toUShort("00E0"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x00E0u, this)
             assertEquals(0, renderer.display.sum())
         }
     }
 
     @Test
     fun `00EE - RET - Return from subroutine`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.sp = toUShort("0002")
-            cpu.stack[0] = toUShort("0082")
-            cpu.stack[1] = toUShort("0528")
-            cpu.stack[2] = toUShort("0F11")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.sp = 0x0002u
+            cpu.stack[0] = 0x0082u
+            cpu.stack[1] = 0x0528u
+            cpu.stack[2] = 0x0F11u
 
-            cpu.executeOpcode(toUShort("00EE"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x00EEu, this)
 
-            assertEquals(toUShort("0F11"), cpu.pc)
-            assertEquals(toUShort("0001"), cpu.sp)
+            assertEquals(0x0F11u, cpu.pc)
+            assertEquals(0x0001u, cpu.sp)
         }
     }
 
     @Test
     fun `1nnn - JP - The interpreter sets the program counter to nnn`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.executeOpcode(toUShort("1222"), memory, renderer, keyboard)
-            assertEquals(toUShort("0222"), cpu.pc)
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.executeOpcode(0x1222u, this)
+            assertEquals(0x0222u, cpu.pc)
         }
     }
 
     @Test
     fun `2nnn - CALL - Call subroutine at nnn`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.pc = toUShort("0203")
-            cpu.sp = toUShort("0002")
-            cpu.stack[0] = toUShort("0082")
-            cpu.stack[1] = toUShort("0528")
-            cpu.stack[2] = toUShort("0F11")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.pc = 0x0203u
+            cpu.sp = 0x0002u
+            cpu.stack[0] = 0x0082u
+            cpu.stack[1] = 0x0528u
+            cpu.stack[2] = 0x0F11u
 
-            cpu.executeOpcode(toUShort("2AF2"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x2AF2u, this)
 
-            assertEquals(toUShort("0AF2"), cpu.pc)
-            assertEquals(toUShort("0003"), cpu.sp)
-            assertEquals(toUShort("0205"), cpu.stack[cpu.sp.toInt()])
+            assertEquals(0x0AF2u, cpu.pc)
+            assertEquals(0x0003u, cpu.sp)
+            assertEquals(0x0205u, cpu.stack[cpu.sp.toInt()])
         }
     }
 
     @Test
     fun `3xkk - SE Vx, byte - Skip next instruction if Vx == kk`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
 
-            cpu.executeOpcode(toUShort("3133"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x3133u, this)
 
-            assertEquals(toUShort("0204"), cpu.pc)
+            assertEquals(0x0204u, cpu.pc)
         }
     }
 
     @Test
     fun `3xkk - SE Vx, byte - Don't skip next instruction if Vx != kk`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
 
-            cpu.executeOpcode(toUShort("3131"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x3131u, this)
 
-            assertEquals(toUShort("0202"), cpu.pc)
+            assertEquals(0x0202u, cpu.pc)
         }
     }
 
     @Test
     fun `4xkk - SNE Vx, byte - Skip next instruction if Vx != kk`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
 
-            cpu.executeOpcode(toUShort("4131"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x4131u, this)
 
-            assertEquals(toUShort("0204"), cpu.pc)
+            assertEquals(0x0204u, cpu.pc)
         }
     }
 
     @Test
     fun `4xkk - SNE Vx, byte - Don't skip next instruction if Vx == kk`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
 
-            cpu.executeOpcode(toUShort("4133"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x4133u, this)
 
-            assertEquals(toUShort("0202"), cpu.pc)
+            assertEquals(0x0202u, cpu.pc)
         }
     }
 
     @Test
     fun `5xy0 - SE Vx, Vy - Skip next instruction if Vx == Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
-            cpu.vx[10] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
+            cpu.vx[10] = 0x33u
 
-            cpu.executeOpcode(toUShort("51A0"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x51A0u, this)
 
-            assertEquals(toUShort("0204"), cpu.pc)
+            assertEquals(0x0204u, cpu.pc)
         }
     }
 
     @Test
     fun `5xy0 - SE Vx, Vy - Don't skip next instruction if Vx != Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("31")
-            cpu.vx[10] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x31u
+            cpu.vx[10] = 0x33u
 
-            cpu.executeOpcode(toUShort("51A0"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x51A0u, this)
 
-            assertEquals(toUShort("0202"), cpu.pc)
+            assertEquals(0x0202u, cpu.pc)
         }
     }
 
     @Test
     fun `6xkk - LD Vx, byte - Set Vx = kk`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
 
-            cpu.executeOpcode(toUShort("6112"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x6112u, this)
 
-            assertEquals(toUByte("12"), cpu.vx[1])
+            assertEquals(0x12u, cpu.vx[1])
         }
     }
 
     @Test
     fun `7xkk - ADD Vx, byte - Set Vx = Vx + kk`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[8] = toUByte("14")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[8] = 0x14u
 
-            cpu.executeOpcode(toUShort("7816"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x7816u, this)
 
-            assertEquals(toUByte("2A"), cpu.vx[8])
+            assertEquals(0x2Au, cpu.vx[8])
         }
     }
 
     @Test
     fun `8xy0 - LD Vx, Vy - Set Vx = Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("AD")
-            cpu.vx[8] = toUByte("14")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0xADu
+            cpu.vx[8] = 0x14u
 
-            cpu.executeOpcode(toUShort("8180"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8180u, this)
 
-            assertEquals(toUByte("14"), cpu.vx[1])
+            assertEquals(0x14u, cpu.vx[1])
         }
     }
 
     @Test
     fun `8xy1 - OR Vx, Vy - Set Vx = Vx OR Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("AD")
-            cpu.vx[8] = toUByte("14")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0xADu
+            cpu.vx[8] = 0x14u
 
-            cpu.executeOpcode(toUShort("8181"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8181u, this)
 
-            assertEquals(toUByte("BD"), cpu.vx[1])
+            assertEquals(0xBDu, cpu.vx[1])
         }
     }
 
     @Test
     fun `8xy2 - AND Vx, Vy - Set Vx = Vx AND Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("AD")
-            cpu.vx[8] = toUByte("14")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0xADu
+            cpu.vx[8] = 0x14u
 
-            cpu.executeOpcode(toUShort("8182"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8182u, this)
 
-            assertEquals(toUByte("04"), cpu.vx[1])
+            assertEquals(0x04u, cpu.vx[1])
         }
     }
 
     @Test
     fun `8xy3 - XOR Vx, Vy - Set Vx = Vx XOR Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("AD")
-            cpu.vx[8] = toUByte("14")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0xADu
+            cpu.vx[8] = 0x14u
 
-            cpu.executeOpcode(toUShort("8183"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8183u, this)
 
-            assertEquals(toUByte("B9"), cpu.vx[1])
+            assertEquals(0xB9u, cpu.vx[1])
         }
     }
 
     @Test
     fun `8xy4 - ADD Vx, Vy - Set Vx = Vx + Vy, carry flag set VF = 1`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("AC")
-            cpu.vx[8] = toUByte("DC")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0xACu
+            cpu.vx[8] = 0xDCu
 
-            cpu.executeOpcode(toUShort("8184"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8184u, this)
 
-            assertEquals(toUByte("88"), cpu.vx[1])
-            assertEquals(toUByte("01"), cpu.vx[15])
+            assertEquals(0x88u, cpu.vx[1])
+            assertEquals(0x01u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xy4 - ADD Vx, Vy - Set Vx = Vx + Vy, carry flag not set VF = 0`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("AC")
-            cpu.vx[8] = toUByte("30")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0xACu
+            cpu.vx[8] = 0x30u
 
-            cpu.executeOpcode(toUShort("8184"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8184u, this)
 
-            assertEquals(toUByte("DC"), cpu.vx[1])
-            assertEquals(toUByte("00"), cpu.vx[15])
+            assertEquals(0xDCu, cpu.vx[1])
+            assertEquals(0x00u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xy5 - SUB Vx, Vy - Set Vx = Vx - Vy, set VF = NOT borrow`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("20")
-            cpu.vx[8] = toUByte("03")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x20u
+            cpu.vx[8] = 0x03u
 
-            cpu.executeOpcode(toUShort("8185"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8185u, this)
 
-            assertEquals(toUByte("1D"), cpu.vx[1])
-            assertEquals(toUByte("01"), cpu.vx[15])
+            assertEquals(0x1Du, cpu.vx[1])
+            assertEquals(0x01u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xy5 - SUB Vx, Vy - Set Vx = Vx - Vy, set VF = borrow`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("09")
-            cpu.vx[8] = toUByte("0F")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x09u
+            cpu.vx[8] = 0x0Fu
 
-            cpu.executeOpcode(toUShort("8185"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8185u, this)
 
-            assertEquals(toUByte("FA"), cpu.vx[1])
-            assertEquals(toUByte("00"), cpu.vx[15])
+            assertEquals(0xFAu, cpu.vx[1])
+            assertEquals(0x00u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xy6 - SHR Vx {, Vy} - Set Vx = Vx SHR 1 - with even number`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("20")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x20u
 
-            cpu.executeOpcode(toUShort("8106"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8106u, this)
 
-            assertEquals(toUByte("10"), cpu.vx[1])
-            assertEquals(toUByte("00"), cpu.vx[15])
+            assertEquals(0x10u, cpu.vx[1])
+            assertEquals(0x00u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xy6 - SHR Vx {, Vy} - Set Vx = Vx SHR 1 - with odd number`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("31")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x31u
 
-            cpu.executeOpcode(toUShort("8106"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8106u, this)
 
-            assertEquals(toUByte("18"), cpu.vx[1])
-            assertEquals(toUByte("01"), cpu.vx[15])
+            assertEquals(0x18u, cpu.vx[1])
+            assertEquals(0x01u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xy7 - SUBN Vx, Vy - Set Vx = Vy - Vx, set VF = NOT borrow`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("20")
-            cpu.vx[8] = toUByte("03")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x20u
+            cpu.vx[8] = 0x03u
 
-            cpu.executeOpcode(toUShort("8187"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8187u, this)
 
-            assertEquals(toUByte("E3"), cpu.vx[1])
-            assertEquals(toUByte("00"), cpu.vx[15])
+            assertEquals(0xE3u, cpu.vx[1])
+            assertEquals(0x00u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xy7 - SUBN Vx, Vy - Set Vx = Vy - Vx, set VF = borrow`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("03")
-            cpu.vx[8] = toUByte("20")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x03u
+            cpu.vx[8] = 0x20u
 
-            cpu.executeOpcode(toUShort("8187"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x8187u, this)
 
-            assertEquals(toUByte("1D"), cpu.vx[1])
-            assertEquals(toUByte("01"), cpu.vx[15])
+            assertEquals(0x1Du, cpu.vx[1])
+            assertEquals(0x01u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xyE - SHL Vx {, Vy} - Set Vx = Vx SHL 1 - with even number`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("20")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x20u
 
-            cpu.executeOpcode(toUShort("810E"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x810Eu, this)
 
-            assertEquals(toUByte("40"), cpu.vx[1])
-            assertEquals(toUByte("00"), cpu.vx[15])
+            assertEquals(0x40u, cpu.vx[1])
+            assertEquals(0x00u, cpu.vx[15])
         }
     }
 
     @Test
     fun `8xyE - SHL Vx {, Vy} - Set Vx = Vx SHL 1 - with odd number`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("98")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x98u
 
-            cpu.executeOpcode(toUShort("810E"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x810Eu, this)
 
-            assertEquals(toUByte("30"), cpu.vx[1])
-            assertEquals(toUByte("01"), cpu.vx[15])
+            assertEquals(0x30u, cpu.vx[1])
+            assertEquals(0x01u, cpu.vx[15])
         }
     }
 
     @Test
     fun `9xy0 - SNE Vx, Vy - Skip next instruction if Vx != Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
-            cpu.vx[10] = toUByte("A5")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
+            cpu.vx[10] = 0xA5u
 
-            cpu.executeOpcode(toUShort("91A0"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x91A0u, this)
 
-            assertEquals(toUShort("0204"), cpu.pc)
+            assertEquals(0x0204u, cpu.pc)
         }
     }
 
     @Test
     fun `9xy0 - SNE Vx, Vy - Don't skip next instruction if Vx == Vy`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[1] = toUByte("33")
-            cpu.vx[10] = toUByte("33")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[1] = 0x33u
+            cpu.vx[10] = 0x33u
 
-            cpu.executeOpcode(toUShort("91A0"), memory, renderer, keyboard)
+            cpu.executeOpcode(0x91A0u, this)
 
-            assertEquals(toUShort("0202"), cpu.pc)
+            assertEquals(0x0202u, cpu.pc)
         }
     }
 
     @Test
     fun `Annn - LD I, addr - Set I = nnn`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.executeOpcode(toUShort("A315"), memory, renderer, keyboard)
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.executeOpcode(0xA315u, this)
 
-            assertEquals(toUShort("0315"), cpu.i)
+            assertEquals(0x0315u, cpu.i)
         }
     }
 
     @Test
     fun `Bnnn - JP V0, addr - Jump to location nnn + V0`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[0] = toUByte("20")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[0] = 0x20u
 
-            cpu.executeOpcode(toUShort("B231"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xB231u, this)
 
-            assertEquals(toUShort("0251"), cpu.pc)
+            assertEquals(0x0251u, cpu.pc)
         }
     }
 
     @Test
     fun `Cxkk - RND Vx, byte - Set Vx = random byte AND kk`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("00")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x00u
 
-            cpu.executeOpcode(toUShort("C51A"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xC51Au, this)
 
-            // assertNotEquals(toUByte("00"), cpu.vx[5])
             assertTrue {
-                cpu.vx[5] <= toUByte("1A")
+                cpu.vx[5] <= 0x1Au
             }
         }
     }
 
     @Test
     fun `Dxyn - DRW Vx, Vy, nibble - Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
+        Chip8(Configuration().apply { headless = true }).apply {
             val addr = 0
             val posX = 0
             val posY = 0
 
-            memory[addr] = toUByte("00FF")
-            memory[addr + 1] = toUByte("00FF")
-            memory[addr + 2] = toUByte("00FF")
-            memory[addr + 3] = toUByte("00FF")
-            memory[addr + 4] = toUByte("00FF")
-            memory[addr + 5] = toUByte("00FF")
+            memory[addr] = 0x00FFu
+            memory[addr + 1] = 0x00FFu
+            memory[addr + 2] = 0x00FFu
+            memory[addr + 3] = 0x00FFu
+            memory[addr + 4] = 0x00FFu
+            memory[addr + 5] = 0x00FFu
 
             cpu.i = addr.toUShort()
             cpu.vx[1] = posX.toUByte()
             cpu.vx[2] = posY.toUByte()
 
-            cpu.executeOpcode(toUShort("D126"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xD126u, this)
 
-            assertEquals(toUByte("00"), cpu.vx[15])
+            assertEquals(0x00u, cpu.vx[15])
 
             (posX until posX + 8).forEach { x ->
                 (posY until posY + 6).forEach { y ->
@@ -472,9 +405,9 @@ class CPUInstructions {
             }
 
             //Redraw to test xor
-            cpu.executeOpcode(toUShort("D126"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xD126u, this)
 
-            assertEquals(toUByte("01"), cpu.vx[15])
+            assertEquals(0x01u, cpu.vx[15])
 
             (posX until posX + 8).forEach { x ->
                 (posY until posY + 6).forEach { y ->
@@ -486,215 +419,187 @@ class CPUInstructions {
 
     @Test
     fun `Ex9E - SKP Vx - Skip next instruction if key with the value of Vx is pressed`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("02")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x02u
             keyboard.keyPressed = 0x02
 
-            cpu.executeOpcode(toUShort("E59E"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xE59Eu, this)
 
-            assertEquals(toUShort("0204"), cpu.pc)
+            assertEquals(0x0204u, cpu.pc)
         }
     }
 
     @Test
     fun `Ex9E - SKP Vx - Don't skip next instruction if key with the value of Vx is NOT pressed`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("02")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x02u
             keyboard.keyPressed = 0x03
 
-            cpu.executeOpcode(toUShort("E59E"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xE59Eu, this)
 
-            assertEquals(toUShort("0202"), cpu.pc)
+            assertEquals(0x0202u, cpu.pc)
         }
     }
 
     @Test
     fun `ExA1 - SKNP Vx - Skip next instruction if key with the value of Vx is NOT pressed`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("02")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x02u
             keyboard.keyPressed = 0x03
 
-            cpu.executeOpcode(toUShort("E5A1"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xE5A1u, this)
 
-            assertEquals(toUShort("0204"), cpu.pc)
+            assertEquals(0x0204u, cpu.pc)
         }
     }
 
     @Test
     fun `ExA1 - SKNP Vx - Don't skip next instruction if key with the value of Vx is pressed`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("02")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x02u
             keyboard.keyPressed = 0x02
 
-            cpu.executeOpcode(toUShort("E5A1"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xE5A1u, this)
 
-            assertEquals(toUShort("0202"), cpu.pc)
+            assertEquals(0x0202u, cpu.pc)
         }
     }
 
     @Test
     fun `Fx07 - LD Vx, DT - Set Vx = delay timer value`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.delayTimer = toUByte("15")
-            cpu.vx[5] = toUByte("02")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.delayTimer = 0x15u
+            cpu.vx[5] = 0x02u
 
-            cpu.executeOpcode(toUShort("F507"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF507u, this)
 
-            assertEquals(toUByte("15"), cpu.vx[5])
+            assertEquals(0x15u, cpu.vx[5])
         }
     }
 
     @Test
     fun `Fx0A - LD Vx, K - Wait for a key press, store the value of the key in Vx - key pressed`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
+        Chip8(Configuration().apply { headless = true }).apply {
             keyboard.keyPressed = 0x08
-            cpu.vx[5] = toUByte("02")
+            cpu.vx[5] = 0x02u
 
-            cpu.executeOpcode(toUShort("F50A"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF50Au, this)
 
-            assertEquals(toUByte("08"), cpu.vx[5])
+            assertEquals(0x08u, cpu.vx[5])
         }
     }
 
     @Test
     fun `Fx0A - LD Vx, K - Wait for a key press, store the value of the key in Vx - no key pressed`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
+        Chip8(Configuration().apply { headless = true }).apply {
             keyboard.keyPressed = -1
-            cpu.vx[5] = toUByte("02")
+            cpu.vx[5] = 0x02u
 
-            cpu.executeOpcode(toUShort("F50A"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF50Au, this)
 
-            assertEquals(toUByte("02"), cpu.vx[5])
-            assertEquals(toUShort("0200"), cpu.pc)
+            assertEquals(0x02u, cpu.vx[5])
+            assertEquals(0x0200u, cpu.pc)
         }
     }
 
     @Test
     fun `Fx15 - LD DT, Vx - Set delay timer = Vx`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("08")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x08u
 
-            cpu.executeOpcode(toUShort("F515"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF515u, this)
 
-            assertEquals(toUByte("08"), cpu.delayTimer)
+            assertEquals(0x08u, cpu.delayTimer)
         }
     }
 
     @Test
     fun `Fx18 - LD ST, Vx - Set sound timer = Vx`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("08")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x08u
 
-            cpu.executeOpcode(toUShort("F518"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF518u, this)
 
-            assertEquals(toUByte("08"), cpu.soundTimer)
+            assertEquals(0x08u, cpu.soundTimer)
         }
     }
 
     @Test
     fun `Fx1E - ADD I, Vx - Set I = I + Vx`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.i = toUShort("0315")
-            cpu.vx[5] = toUByte("DC")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.i = 0x0315u
+            cpu.vx[5] = 0xDCu
 
-            cpu.executeOpcode(toUShort("F51E"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF51Eu, this)
 
-            assertEquals(toUShort("03F1"), cpu.i)
+            assertEquals(0x03F1u, cpu.i)
         }
     }
 
     @Test
     fun `Fx29 - LD F, Vx - Set I = location of sprite for digit Vx`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.vx[5] = toUByte("03")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.vx[5] = 0x03u
 
-            cpu.executeOpcode(toUShort("F529"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF529u, this)
 
-            assertEquals(toUShort("000F"), cpu.i)
+            assertEquals(0x000Fu, cpu.i)
         }
     }
 
     @Test
     fun `Fx33 - LD B, Vx - Store BCD representation of Vx in memory locations I, I+1, and I+2`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.i = toUShort("0420")
-            cpu.vx[5] = toUByte("7B")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.i = 0x0420u
+            cpu.vx[5] = 0x7Bu
 
-            cpu.executeOpcode(toUShort("F533"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF533u, this)
 
-            assertEquals(toUByte("01"), memory[0x420])
-            assertEquals(toUByte("02"), memory[0x421])
-            assertEquals(toUByte("03"), memory[0x422])
+            assertEquals(0x01u, memory[0x420])
+            assertEquals(0x02u, memory[0x421])
+            assertEquals(0x03u, memory[0x422])
         }
     }
 
     @Test
     fun `Fx55 - LD {I}, Vx - Store registers V0 through Vx in memory starting at location I`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.i = toUShort("0420")
-            cpu.vx[0] = toUByte("05")
-            cpu.vx[1] = toUByte("54")
-            cpu.vx[2] = toUByte("A8")
-            cpu.vx[3] = toUByte("D1")
-            cpu.vx[4] = toUByte("DC")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.i = 0x0420u
+            cpu.vx[0] = 0x05u
+            cpu.vx[1] = 0x54u
+            cpu.vx[2] = 0xA8u
+            cpu.vx[3] = 0xD1u
+            cpu.vx[4] = 0xDCu
 
-            cpu.executeOpcode(toUShort("F455"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF455u, this)
 
-            assertEquals(toUShort("0424"), cpu.i)
-            assertEquals(toUByte("05"), memory[0x420])
-            assertEquals(toUByte("54"), memory[0x421])
-            assertEquals(toUByte("A8"), memory[0x422])
-            assertEquals(toUByte("D1"), memory[0x423])
-            assertEquals(toUByte("DC"), memory[0x424])
+            assertEquals(0x0424u, cpu.i)
+            assertEquals(0x05u, memory[0x420])
+            assertEquals(0x54u, memory[0x421])
+            assertEquals(0xA8u, memory[0x422])
+            assertEquals(0xD1u, memory[0x423])
+            assertEquals(0xDCu, memory[0x424])
         }
     }
 
     @Test
     fun `Fx65 - LD Vx, {I} - Read registers V0 through Vx from memory starting at location I`() {
-        val chip8 = Chip8()
-        chip8.setup(Configuration().apply { headless = true }, "")
-        chip8.apply {
-            cpu.i = toUShort("0420")
-            memory[0x420] = toUByte("05")
-            memory[0x421] = toUByte("54")
-            memory[0x422] = toUByte("A8")
-            memory[0x423] = toUByte("D1")
-            memory[0x424] = toUByte("DC")
+        Chip8(Configuration().apply { headless = true }).apply {
+            cpu.i = 0x0420u
+            memory[0x420] = 0x05u
+            memory[0x421] = 0x54u
+            memory[0x422] = 0xA8u
+            memory[0x423] = 0xD1u
+            memory[0x424] = 0xDCu
 
-            cpu.executeOpcode(toUShort("F465"), memory, renderer, keyboard)
+            cpu.executeOpcode(0xF465u, this)
 
-            assertEquals(toUShort("0424"), cpu.i)
-            assertEquals(toUByte("05"), cpu.vx[0])
-            assertEquals(toUByte("54"), cpu.vx[1])
-            assertEquals(toUByte("A8"), cpu.vx[2])
-            assertEquals(toUByte("D1"), cpu.vx[3])
-            assertEquals(toUByte("DC"), cpu.vx[4])
+            assertEquals(0x0424u, cpu.i)
+            assertEquals(0x05u, cpu.vx[0])
+            assertEquals(0x54u, cpu.vx[1])
+            assertEquals(0xA8u, cpu.vx[2])
+            assertEquals(0xD1u, cpu.vx[3])
+            assertEquals(0xDCu, cpu.vx[4])
         }
     }
 }

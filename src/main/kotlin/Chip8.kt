@@ -1,23 +1,19 @@
 import org.openrndr.application
-import org.openrndr.color.ColorRGBa
 import java.io.File
+import javax.sound.midi.MidiSystem
 
 @ExperimentalUnsignedTypes
-class Chip8 {
+class Chip8 internal constructor(configuration: Configuration) {
     /** 4KB of memory **/
     internal val memory = UByteArray(4096)
 
-    internal var cpu: CPU = CPU()
-    internal lateinit var renderer: Renderer
-    internal lateinit var keyboard: Keyboard
+    internal val cpu: CPU = CPU()
+    internal val keyboard = Keyboard()
+    internal val renderer = Renderer(configuration.scale)
 
-    private lateinit var configuration: Configuration
+    private val synth = MidiSystem.getSynthesizer()
 
-    fun setup(configuration: Configuration, rom: String) {
-        this.configuration = configuration
-        keyboard = Keyboard()
-        renderer = Renderer(configuration.scale)
-
+    fun run(rom: String) {
         // Array of hex values for each sprite. Each sprite is 5 bytes.
         // Sprites are stored in the interpreter section of memory starting at 0x00
         listOf(
@@ -48,31 +44,63 @@ class Chip8 {
                 memory[512 + index] = byte.toUByte()
             }
         }
-    }
 
-    fun run() {
-        if (configuration.headless) {
-            cpu.cycle(memory, renderer, keyboard)
-        } else {
-            application {
-                configure {
-                    width = renderer.cols * renderer.scale
-                    height = renderer.rows * renderer.scale
+        synth.open()
+
+        application {
+            configure {
+                width = renderer.cols * renderer.scale
+                height = renderer.rows * renderer.scale
+            }
+
+            program {
+                keyboard.keyDown.listen(this@Chip8.keyboard::onKeyDown)
+                keyboard.character.listen {
+                    if (it.character == 'p') {
+                        renderer.clear()
+                        cpu.reset()
+                    }
                 }
+                keyboard.keyUp.listen(this@Chip8.keyboard::onKeyUp)
 
-                program {
-                    keyboard.keyDown.listeners.add(this@Chip8.keyboard::onKeyDown)
-                    keyboard.keyUp.listeners.add(this@Chip8.keyboard::onKeyUp)
+                extend {
+                    cpu.cycle(this@Chip8)
+                    renderer.render(drawer)
 
-                    drawer.stroke = ColorRGBa.WHITE
-                    drawer.fill = ColorRGBa.WHITE
+                    if (frameCount % 60 == 0) {
+                        if (cpu.delayTimer > 0u) {
+                            cpu.delayTimer = cpu.delayTimer.dec()
+                        }
 
-                    extend {
-                        cpu.cycle(memory, renderer, this@Chip8.keyboard)
-                        renderer.render(drawer)
+                        if (cpu.soundTimer > 0u) {
+                            cpu.soundTimer = cpu.soundTimer.dec()
+                            synth.channels[0].noteOn(60, 127)
+                        } else {
+                            synth.channels[0].noteOff(60, 127)
+                        }
                     }
                 }
             }
         }
+
+        synth.close()
     }
+}
+
+class Chip8Builder internal constructor() {
+    private val configuration = Configuration()
+
+    fun configure(conf: Configuration.() -> Unit) {
+        configuration.apply { conf() }
+    }
+
+    @ExperimentalUnsignedTypes
+    fun run(rom: String) {
+        Chip8(configuration).run(rom)
+    }
+}
+
+@ExperimentalUnsignedTypes
+fun chip8(build: Chip8Builder.() -> Unit) {
+    Chip8Builder().apply { build() }
 }

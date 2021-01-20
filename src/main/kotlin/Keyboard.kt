@@ -42,7 +42,7 @@ class Keyboard {
      * Listener for CHIP-8 key down events
      */
     fun onKeyDown(event: KeyEvent) {
-        keymap[event.key]?.let { mappedKey -> keyPressed = mappedKey }
+        keymap[event.key]?.let { keyPressed = it }
     }
 
     /**
