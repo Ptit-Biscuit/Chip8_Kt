@@ -7,11 +7,23 @@ class Chip8 internal constructor(configuration: Configuration) {
     /** 4KB of memory **/
     internal val memory = UByteArray(4096)
 
+    /** CPU emulation **/
     internal val cpu: CPU = CPU()
+
+    /** Keyboard mapper **/
     internal val keyboard = Keyboard()
+
+    /** Graphics renderer **/
     internal val renderer = Renderer(configuration.scale)
 
+    /** MIDI sound synthesizer **/
     private val synth = MidiSystem.getSynthesizer()
+
+    /** Pause the emulation **/
+    private var paused = false
+
+    /** Mute the emulation **/
+    private var muted = false
 
     fun run(rom: String) {
         // Array of hex values for each sprite. Each sprite is 5 bytes.
@@ -33,11 +45,12 @@ class Chip8 internal constructor(configuration: Configuration) {
             0xE0, 0x90, 0x90, 0x90, 0xE0, // D
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
             0xF0, 0x80, 0xF0, 0x80, 0x80  // F
-        ).forEachIndexed { index, sprite ->
-            memory[index] = sprite.toUByte()
+        ).forEachIndexed { index, byte ->
+            memory[index] = byte.toUByte()
         }
 
-        // Load ROM into memory if it exists
+        // Load ROM into memory if it exists.
+        // Most CHIP-8 programs start at 0x200 (512)
         val romFile = File("roms/$rom")
         if (romFile.isFile) {
             romFile.readBytes().forEachIndexed { index, byte ->
@@ -45,8 +58,10 @@ class Chip8 internal constructor(configuration: Configuration) {
             }
         }
 
+        // Activate sound before showing GUI
         synth.open()
 
+        // Setting GUI application
         application {
             configure {
                 width = renderer.cols * renderer.scale
@@ -54,9 +69,21 @@ class Chip8 internal constructor(configuration: Configuration) {
             }
 
             program {
+                // Prepare keyboard listeners
                 keyboard.keyDown.listen(this@Chip8.keyboard::onKeyDown)
-                keyboard.character.listen {
-                    if (it.character == 'p') {
+                keyboard.keyDown.listen {
+                    // Add 'p' to pause
+                    if (it.name == "p") {
+                        paused = !paused
+                    }
+
+                    // Add 'm' to mute
+                    if (it.name == "m") {
+                        muted = !muted
+                    }
+
+                    // Add 'escape' to reset rom
+                    if (it.name == "escape") {
                         renderer.clear()
                         cpu.reset()
                     }
@@ -64,9 +91,12 @@ class Chip8 internal constructor(configuration: Configuration) {
                 keyboard.keyUp.listen(this@Chip8.keyboard::onKeyUp)
 
                 extend {
-                    cpu.cycle(this@Chip8)
-                    renderer.render(drawer)
+                    // Run cpu cycle if not paused
+                    if (!paused) {
+                        cpu.cycle(this@Chip8)
+                    }
 
+                    // Every 60 frames we decrease timers
                     if (frameCount % 60 == 0) {
                         if (cpu.delayTimer > 0u) {
                             cpu.delayTimer = cpu.delayTimer.dec()
@@ -74,15 +104,23 @@ class Chip8 internal constructor(configuration: Configuration) {
 
                         if (cpu.soundTimer > 0u) {
                             cpu.soundTimer = cpu.soundTimer.dec()
-                            synth.channels[0].noteOn(60, 127)
-                        } else {
-                            synth.channels[0].noteOff(60, 127)
                         }
+                    }
+
+                    // Render emulated frame
+                    renderer.render(drawer)
+
+                    // Play a note if not muted and sound timer is greater than 0
+                    if (!muted and (cpu.soundTimer > 0u)) {
+                        synth.channels[0].noteOn(60, 127)
+                    } else {
+                        synth.channels[0].noteOff(60, 127)
                     }
                 }
             }
         }
 
+        // Deactivate sound
         synth.close()
     }
 }
