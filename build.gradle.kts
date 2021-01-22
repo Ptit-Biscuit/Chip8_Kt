@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem
 
-val openrndrVersion = "0.3.42-rc.5"
+val openrndrVersion = "0.3.45-rc.8"
 val openrndrOs = when (OperatingSystem.current()) {
     OperatingSystem.WINDOWS -> "windows"
     OperatingSystem.MAC_OS -> "macos"
