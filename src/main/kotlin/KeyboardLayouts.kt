@@ -38,5 +38,10 @@ enum class KeyboardLayouts(val mapper: Map<String, Int>, var keyPressed: Int = -
             "c" to 0x0B,
             "v" to 0x0F
         )
-    )
+    );
+
+    fun bind(bindings: Map<String, Int>.() -> Unit): KeyboardLayouts {
+        mapper.apply(bindings)
+        return this
+    }
 }
