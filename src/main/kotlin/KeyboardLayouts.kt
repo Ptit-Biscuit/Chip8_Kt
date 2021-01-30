@@ -1,4 +1,4 @@
-enum class KeyboardLayouts(val mapper: Map<String, Int>, var keyPressed: Int = -1) {
+enum class KeyboardLayouts(val mapper: Map<String, Int>, val controls: Map<String, String>, var keyPressed: Int = -1) {
     EN(
         mapOf(
             "1" to 0x01,
@@ -17,6 +17,11 @@ enum class KeyboardLayouts(val mapper: Map<String, Int>, var keyPressed: Int = -
             "x" to 0x00,
             "c" to 0x0B,
             "v" to 0x0F
+        ),
+        mapOf(
+            "pause" to "p",
+            "mute" to "m",
+            "quit" to "escape"
         )
     ),
     FR(
@@ -37,11 +42,21 @@ enum class KeyboardLayouts(val mapper: Map<String, Int>, var keyPressed: Int = -
             "x" to 0x00,
             "c" to 0x0B,
             "v" to 0x0F
+        ),
+        mapOf(
+            "pause" to "p",
+            "mute" to "m",
+            "quit" to "escape"
         )
     );
 
-    fun bind(bindings: Map<String, Int>.() -> Unit): KeyboardLayouts {
-        mapper.apply(bindings)
+    fun bindMapperTo(bindings: Map<String, Int>.() -> Unit): KeyboardLayouts {
+        mapper.apply { bindings() }
+        return this
+    }
+
+    fun bindControlsTo(bindings: Map<String, String>.() -> Unit): KeyboardLayouts {
+        controls.apply { bindings() }
         return this
     }
 }

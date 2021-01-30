@@ -37,7 +37,7 @@ data class CPU(
     val stack: UIntArray = UIntArray(16)
 )
 
-data class Renderer(
+data class Screen(
     val cols: Int = 64,
     val rows: Int = 32,
     var scale: Int = Configuration().scale,
@@ -52,17 +52,17 @@ class Chip8 internal constructor() {
     internal val memory = UByteArray(4096)
     internal val cpu = CPU()
     internal var keyboard = configuration.keyboardLayout
-    internal var renderer = Renderer()
+    internal var screen = Screen()
 
-    var pause = false
     var mute = false
+    var pause = false
     var synth: Synthesizer = MidiSystem.getSynthesizer()
 
     fun configure(init: Configuration.() -> Unit) {
         configuration.apply { init() }
         cpu.pc = configuration.pcStart
         keyboard = configuration.keyboardLayout
-        renderer.scale = configuration.scale
+        screen.scale = configuration.scale
     }
 
     fun emulate(opcode: Int) {
@@ -72,7 +72,7 @@ class Chip8 internal constructor() {
 
         when (opcode and 0xF000) {
             0x0000 -> when (opcode) {
-                0x00E0 -> renderer.display.fill(0) // CLS
+                0x00E0 -> screen.display.fill(0) // CLS
                 0x00EE -> cpu.pc = cpu.stack[cpu.sp--].toInt() // RET
             }
             0x1000 -> cpu.pc = opcode and 0x0FFF // JP
@@ -124,13 +124,13 @@ class Chip8 internal constructor() {
                     var sprite = memory[cpu.i + row]
                     (0 until 8).forEach { col ->
                         if (sprite and 0x80u > 0x00u) {
-                            val pixelX = cpu.vx[x].toInt() + col % renderer.cols
-                            val pixelY = cpu.vx[y].toInt() + row % renderer.rows
-                            val pixelLoc = pixelX + pixelY * renderer.cols
+                            val pixelX = cpu.vx[x].toInt() + col % screen.cols
+                            val pixelY = cpu.vx[y].toInt() + row % screen.rows
+                            val pixelLoc = pixelX + pixelY * screen.cols
 
-                            renderer.display[pixelLoc] = renderer.display[pixelLoc] xor 1
+                            screen.display[pixelLoc] = screen.display[pixelLoc] xor 1
 
-                            if (renderer.display[pixelLoc] == 0)
+                            if (screen.display[pixelLoc] == 0)
                                 cpu.vx[0xF] = 0x01u
                         }
 
@@ -206,8 +206,8 @@ class Chip8 internal constructor() {
             // Setting GUI application
             application {
                 configure {
-                    width = renderer.cols * renderer.scale
-                    height = renderer.rows * renderer.scale
+                    width = screen.cols * screen.scale
+                    height = screen.rows * screen.scale
                 }
 
                 program {
@@ -216,18 +216,9 @@ class Chip8 internal constructor() {
                         this@Chip8.keyboard.keyPressed = this@Chip8.keyboard.mapper[it.name] ?: -1
 
                         when (it.name) {
-                            "m" -> mute = !mute
-                            "p" -> pause = !pause
-                            "escape" -> {
-                                renderer.display.fill(0)
-                                cpu.vx.fill(0u)
-                                cpu.i = 0
-                                cpu.pc = configuration.pcStart
-                                cpu.sp = 0
-                                cpu.stack.fill(0u)
-                                cpu.delayTimer = 0u
-                                cpu.soundTimer = 0u
-                            }
+                            this@Chip8.keyboard.controls["mute"] -> mute = !mute
+                            this@Chip8.keyboard.controls["pause"] -> pause = !pause
+                            this@Chip8.keyboard.controls["quit"] -> application.exit()
                         }
                     }
 
@@ -249,12 +240,12 @@ class Chip8 internal constructor() {
                             synth.channels[0].noteOff(60, 127)
 
                         // Render emulated frame
-                        (0 until renderer.display.size).forEach {
-                            val x = (it.toDouble() % renderer.cols) * renderer.scale
-                            val y = floor(it.toDouble() / renderer.cols) * renderer.scale
+                        (0 until screen.display.size).forEach {
+                            val x = (it.toDouble() % screen.cols) * screen.scale
+                            val y = floor(it.toDouble() / screen.cols) * screen.scale
 
-                            drawer.fill = if (renderer.display[it] == 1) ColorRGBa.WHITE else ColorRGBa.BLACK
-                            drawer.rectangle(x, y, renderer.scale.toDouble(), renderer.scale.toDouble())
+                            drawer.fill = if (screen.display[it] == 1) ColorRGBa.WHITE else ColorRGBa.BLACK
+                            drawer.rectangle(x, y, screen.scale.toDouble(), screen.scale.toDouble())
                         }
                     }
                 }

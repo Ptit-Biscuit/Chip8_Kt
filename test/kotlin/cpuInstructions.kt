@@ -16,12 +16,12 @@ class CPUInstructions {
                 63 to 0,
                 63 to 31
             ).forEach { (x, y) ->
-                val pixelLoc = (x % renderer.cols) + ((y % renderer.rows) * renderer.cols)
-                renderer.display[pixelLoc] = renderer.display[pixelLoc] xor 1
+                val pixelLoc = (x % screen.cols) + ((y % screen.rows) * screen.cols)
+                screen.display[pixelLoc] = screen.display[pixelLoc] xor 1
             }
 
             emulate(0x00E0)
-            assertEquals(0, renderer.display.sum())
+            assertEquals(0, screen.display.sum())
         }
     }
 
@@ -377,7 +377,7 @@ class CPUInstructions {
 
             (0 until 8).forEach { x ->
                 (0 until 6).forEach { y ->
-                    val pixel = renderer.display[(x % renderer.cols) + ((y % renderer.rows) * renderer.cols)]
+                    val pixel = screen.display[(x % screen.cols) + ((y % screen.rows) * screen.cols)]
                     assertEquals(1, pixel)
                 }
             }
@@ -388,7 +388,7 @@ class CPUInstructions {
 
             (0 until 8).forEach { x ->
                 (0 until 6).forEach { y ->
-                    val pixel = renderer.display[(x % renderer.cols) + ((y % renderer.rows) * renderer.cols)]
+                    val pixel = screen.display[(x % screen.cols) + ((y % screen.rows) * screen.cols)]
                     assertEquals(0, pixel)
                 }
             }
